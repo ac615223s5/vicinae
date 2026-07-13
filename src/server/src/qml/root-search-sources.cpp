@@ -158,6 +158,7 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   auto *section = panel->createSection();
   auto *copyAnswer = new CopyCalculatorAnswerAction(*m_result);
   copyAnswer->setPrimary(true);
+  copyAnswer->addShortcut(Keybind::CopyAction);
   section->addAction(copyAnswer);
   section->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
   section->addAction(new PutCalculatorAnswerInSearchBar(*m_result));
