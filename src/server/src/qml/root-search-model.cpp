@@ -9,6 +9,9 @@
 #include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme.hpp"
+#include "navigation-controller.hpp"
+#include "view-scope.hpp"
+#include <QRegularExpression>
 #include <filesystem>
 #include <utility>
 
@@ -223,6 +226,31 @@ bool RootSearchModel::tryAliasFastTrack() {
 
   activateSelected();
   return true;
+}
+
+bool RootSearchModel::applyTrailingFilter() {
+  QString const text = QString::fromStdString(m_query);
+  int const lastSpace = text.lastIndexOf(QRegularExpression("\\s"));
+  QString const token = (lastSpace < 0 ? text : text.mid(lastSpace + 1)).trimmed();
+  QString const prefix = (lastSpace < 0 ? QString() : text.left(lastSpace)).trimmed();
+
+  if (token.isEmpty()) return false;
+
+  auto id = m_manager->findEntrypointByAlias(token.toStdString());
+  if (!id) return false;
+
+  return scope().appContext()->navigation->activateEntrypoint(*id, {.fallbackText = prefix});
+}
+
+bool RootSearchModel::reorderFavorite(int fromRow, int toRow) {
+  int fromSource = -1, fromItem = -1, toSource = -1, toItem = -1;
+  if (!dataItemAt(fromRow, fromSource, fromItem) || !dataItemAt(toRow, toSource, toItem)) return false;
+
+  // Only reorder within the Favorites section.
+  if (sources()[fromSource] != m_favoritesSource || sources()[toSource] != m_favoritesSource) return false;
+
+  auto id = EntrypointId::fromSerialized(m_favoritesSource->itemId(fromItem).toStdString());
+  return m_manager->moveFavorite(id, toItem);
 }
 
 void RootSearchModel::startCalculator() {
