@@ -508,6 +508,37 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(std::opti
   return getFromSerializedEntrypointIds(m_cfg.value().favorites);
 }
 
+bool RootItemManager::moveFavorite(const EntrypointId &id, int toIndex) {
+  auto favorites = m_cfg.value().favorites;
+  std::string const sid{id};
+
+  auto it = std::ranges::find(favorites, sid);
+  if (it == favorites.end()) return false;
+
+  int const from = static_cast<int>(std::distance(favorites.begin(), it));
+  int const clamped = std::clamp(toIndex, 0, static_cast<int>(favorites.size()) - 1);
+  if (from == clamped) return false;
+
+  favorites.erase(favorites.begin() + from);
+  favorites.insert(favorites.begin() + clamped, sid);
+
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+  emit metadataChanged();
+
+  return true;
+}
+
+std::optional<EntrypointId> RootItemManager::findEntrypointByAlias(std::string_view alias) const {
+  if (alias.empty()) return std::nullopt;
+
+  for (const auto &[id, meta] : m_metadata) {
+    if (meta.alias && *meta.alias == alias) return id;
+  }
+
+  return std::nullopt;
+}
+
 bool RootItemManager::resetRanking(const EntrypointId &id) {
   m_metadata[id].visitCount = 0;
   m_metadata[id].lastVisitedAt.reset();
