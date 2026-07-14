@@ -16,6 +16,9 @@ SelectableDelegate {
     property string filePath: ""
     property string fileUrl: ""
 
+    // 1..5 position from the current selection, for the Alt+N shortcut (0 = hide).
+    property int quickNumber: 0
+
     // Drag-to-reorder (Favorites only). `reorderModel` must expose reorderFavorite(from, to).
     property string itemType: ""
     property int rowIndex: -1
@@ -171,6 +174,13 @@ SelectableDelegate {
             Layout.maximumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
             clip: true
+        }
+
+        TextBadge {
+            visible: root.quickNumber > 0
+            text: root.quickNumber.toString()
+            contentColor: root.selected ? Theme.listItemSelectionFg : Theme.textMuted
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 }
