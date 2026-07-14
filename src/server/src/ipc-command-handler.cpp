@@ -22,6 +22,7 @@
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include "navigation-controller.hpp"
+#include "root-search/pinned-files/pinned-file-root-provider.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "qml/provider-search-view-host.hpp"
@@ -177,6 +178,16 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       return std::unexpected("No primary action for this root item");
     }
 
+    return {};
+  }
+
+  if (command == "pin-file" || command == "unpin-file") {
+    QString const path = query.queryItemValue("path");
+    if (path.isEmpty()) return std::unexpected("Missing 'path' query parameter");
+
+    bool const pin = command == "pin-file";
+    EntrypointId const id{PINNED_FILE_PROVIDER, path.toStdString()};
+    m_ctx.services->rootItemManager()->setItemAsFavorite(id, pin);
     return {};
   }
 

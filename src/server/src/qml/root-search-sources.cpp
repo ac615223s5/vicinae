@@ -6,6 +6,7 @@
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
+#include "root-search/pinned-files/pinned-file-root-provider.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -398,7 +399,9 @@ QHash<int, QVariant> RootFilesSection::customRoleDefaults() const {
 
 std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return nullptr;
-  return FileActions::actionPanel(m_files[i].path, scope().appContext());
+  auto panel = FileActions::actionPanel(m_files[i].path, scope().appContext());
+  panel->createSection()->addAction(new PinFileAction(m_files[i].path));
+  return panel;
 }
 
 QString RootFallbackSection::sectionName() const {
