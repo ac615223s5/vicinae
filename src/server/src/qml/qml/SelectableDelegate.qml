@@ -18,8 +18,17 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: {
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: mouse => {
             root.clicked();
+            if (mouse.button === Qt.RightButton) {
+                // right click selects the item and opens the action panel;
+                // actionPanel is a launcher-window context property, absent in
+                // other engines (e.g. settings window) that reuse this delegate
+                if (typeof actionPanel !== "undefined")
+                    actionPanel.toggle();
+                return;
+            }
             if (Config.activateOnSingleClick)
                 root.activated();
         }

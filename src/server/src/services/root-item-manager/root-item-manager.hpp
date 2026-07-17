@@ -209,6 +209,7 @@ signals:
   void itemsChanged() const;
   void itemRankingReset(const EntrypointId &id) const;
   void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void favoriteOrderChanged(const EntrypointId &id) const;
   void fallbackEnabled(const EntrypointId &id) const;
   void fallbackOrderChanged(const EntrypointId &id) const;
   void fallbackDisabled(const EntrypointId &id) const;
@@ -287,6 +288,10 @@ public:
   bool moveFallbackUp(const EntrypointId &id);
   bool enableFallback(const EntrypointId &id);
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
+  // Move a favorite to a new 0-based position within the favorites list, persisting the order.
+  bool moveFavorite(const EntrypointId &id, int toIndex);
+  // Resolve a configured alias (exact match) back to its entrypoint, if any.
+  std::optional<EntrypointId> findEntrypointByAlias(std::string_view alias) const;
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);

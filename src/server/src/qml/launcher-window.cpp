@@ -473,20 +473,23 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
     break;
   }
 
-  // shortcuts that actions cannot override
+  QKeyEvent const event(QEvent::KeyPress, key, mods);
+
+  // Ctrl+A/V/Z stay reserved for the search field's text editing. Ctrl+C copies
+  // the selected item's bound Copy action when it has one, otherwise it falls
+  // through to the field's native text copy.
   if (mods == Qt::ControlModifier) {
     switch (key) {
     case Qt::Key_A:
-    case Qt::Key_C:
     case Qt::Key_V:
     case Qt::Key_Z:
       return false;
+    case Qt::Key_C:
+      return m_actionPanel->activateBoundAction(&event);
     default:
       break;
     }
   }
-
-  QKeyEvent const event(QEvent::KeyPress, key, mods);
 
   if (m_actionPanel->activateBoundAction(&event)) return true;
 
@@ -515,6 +518,16 @@ void LauncherWindow::handleEscape() {
 
 void LauncherWindow::popToRoot() {
   m_ctx.navigation->popToRoot();
+  emit viewNavigatedBack();
+}
+
+void LauncherWindow::removeCurrentFilter() {
+  auto *nav = m_ctx.navigation.get();
+  if (nav->isRootSearch()) return;
+
+  QString const query = nav->searchText();
+  nav->popCurrentView();
+  nav->setSearchText(query);
   emit viewNavigatedBack();
 }
 

@@ -28,6 +28,12 @@ public:
   Q_INVOKABLE void setFilter(const QString &text);
   void setSelectedIndex(int index) override;
   Q_INVOKABLE bool tryAliasFastTrack();
+  // Apply the alias typed at the end of the query as a scope filter, carrying the
+  // preceding words into the scoped command as its query (Tab). Returns true if applied.
+  Q_INVOKABLE bool applyTrailingFilter();
+  // Reorder a favorite from one flat list row to another (drag-and-drop). Both rows
+  // must be inside the Favorites section, otherwise the move is rejected.
+  Q_INVOKABLE bool reorderFavorite(int fromRow, int toRow);
 
 private:
   void refresh();

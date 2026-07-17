@@ -16,13 +16,17 @@ SelectableDelegate {
     property string filePath: ""
     property string fileUrl: ""
 
-    readonly property bool _isDraggable: root.filePath !== ""
+    // 1..5 position from the current selection, for the Alt+N shortcut (0 = hide).
+    property int quickNumber: 0
 
-    Component.onCompleted: {
-        if (_isDraggable) {
-            //console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
-        }
-    }
+    // Drag-to-reorder (Favorites only). `reorderModel` must expose reorderFavorite(from, to).
+    property string itemType: ""
+    property int rowIndex: -1
+    property var reorderModel: null
+    readonly property bool _reorderable: root.itemType === "favorite" && root.reorderModel !== null
+    property int _dropDelta: 0
+
+    readonly property bool _isDraggable: root.filePath !== ""
 
     Drag.dragType: root._isDraggable ? Drag.Automatic : Drag.None
     Drag.active: root._isDraggable ? dragHandler.active : false
@@ -35,8 +39,32 @@ SelectableDelegate {
     DragHandler {
         id: dragHandler
         enabled: root._isDraggable
+    }
+
+    // Visual feedback + reorder while dragging a favorite. Rows are fixed-height,
+    // so the target position is the current row plus round(dragY / rowHeight).
+    z: reorderHandler.active ? 2 : 0
+    opacity: reorderHandler.active ? 0.7 : 1
+    transform: Translate {
+        y: reorderHandler.active ? reorderHandler.activeTranslation.y : 0
+    }
+
+    DragHandler {
+        id: reorderHandler
+        enabled: root._reorderable
+        target: null
+        onActiveTranslationChanged: {
+            if (active && root.height > 0)
+                root._dropDelta = Math.round(activeTranslation.y / root.height);
+        }
         onActiveChanged: {
-            //console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
+            if (active) {
+                root._dropDelta = 0;
+            } else {
+                if (root._dropDelta !== 0 && root.reorderModel && typeof root.reorderModel.reorderFavorite === "function")
+                    root.reorderModel.reorderFavorite(root.rowIndex, root.rowIndex + root._dropDelta);
+                root._dropDelta = 0;
+            }
         }
     }
 
@@ -146,6 +174,13 @@ SelectableDelegate {
             Layout.maximumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
             clip: true
+        }
+
+        TextBadge {
+            visible: root.quickNumber > 0
+            text: root.quickNumber.toString()
+            contentColor: root.selected ? Theme.listItemSelectionFg : Theme.textMuted
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 }

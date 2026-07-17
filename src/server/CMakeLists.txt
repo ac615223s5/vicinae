@@ -126,6 +126,8 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/shortcuts/shortcut-root-provider.hpp
 	src/root-search/shortcuts/shortcut-root-provider.cpp
+	src/root-search/pinned-files/pinned-file-root-provider.hpp
+	src/root-search/pinned-files/pinned-file-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 	

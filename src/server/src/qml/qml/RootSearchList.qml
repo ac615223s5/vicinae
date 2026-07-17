@@ -75,6 +75,13 @@ GenericListView {
                 itemIsActive: delegateLoader.isActive
                 itemAccessory: delegateLoader.accessoryText
                 itemAccessoryColor: delegateLoader.accessoryColor
+                itemType: delegateLoader.itemType
+                rowIndex: delegateLoader.index
+                reorderModel: searchListView.listModel
+                quickNumber: {
+                    searchListView.listModel.selectedIndex;
+                    return searchListView.listModel.quickSelectNumber(delegateLoader.index);
+                }
                 selected: searchListView.currentIndex === delegateLoader.index
                 onClicked: searchListView.currentIndex = delegateLoader.index
                 onActivated: searchListView.itemActivated(delegateLoader.index)
