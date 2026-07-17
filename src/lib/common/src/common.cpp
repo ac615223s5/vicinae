@@ -1,4 +1,5 @@
 #include "common/common.hpp"
+#include <algorithm>
 #include <clocale>
 #include <cstdlib>
 #include <filesystem>
@@ -18,6 +19,12 @@
 namespace fs = std::filesystem;
 
 namespace vicinae {
+bool isAppDeeplink(std::string_view url) {
+  return std::ranges::any_of(APP_SCHEMES, [&](std::string_view scheme) {
+    return url.starts_with(scheme) && url.substr(scheme.size()).starts_with(":/");
+  });
+}
+
 void enableUtf8() {
 #ifdef _WIN32
   std::setlocale(LC_ALL, ".UTF-8");
@@ -47,12 +54,18 @@ fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();
+  fs::path name{program};
+
+#ifdef _WIN32
+  name += ".exe";
+#endif
+
   std::vector<fs::path> candidates;
   candidates.reserve(3);
 
-  candidates.emplace_back(self / program);
-  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / program);
-  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / program);
+  candidates.emplace_back(self / name);
+  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / name);
+  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / name);
   return candidates;
 }
 

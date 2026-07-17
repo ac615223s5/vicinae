@@ -704,8 +704,27 @@ elseif (WIN32)
 		src/services/app-service/windows/win-app-database.cpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
+		src/services/clipboard/windows/windows-clipboard-server.hpp
+		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/paste/windows-paste-service.hpp
+		src/services/paste/windows-paste-service.cpp
+		src/services/files-service/windows/win-file-indexer.hpp
+		src/services/files-service/windows/win-file-indexer.cpp
+		src/services/window-manager/windows/windows-window.hpp
+		src/services/window-manager/windows/virtual-desktops.hpp
+		src/services/window-manager/windows/virtual-desktops.cpp
+		src/services/window-manager/windows/windows-window-manager.hpp
+		src/services/window-manager/windows/windows-window-manager.cpp
+		src/services/app-runtime/windows/win-app-runtime.hpp
+		src/services/app-runtime/windows/win-app-runtime.cpp
+		src/root-search/windows-settings/windows-settings-root-provider.hpp
+		src/root-search/windows-settings/windows-settings-root-provider.cpp
+		src/root-search/control-panel/control-panel-root-provider.hpp
+		src/root-search/control-panel/control-panel-root-provider.cpp
+		src/services/url-scheme/win-url-scheme-registrar.hpp
+		src/services/url-scheme/win-url-scheme-registrar.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -1056,11 +1075,17 @@ endif()
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
-		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/OnboardingWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowWindows.qml
+		src/qml/qml/HudWindowWindows.qml
 	)
 endif()
 
@@ -1092,6 +1117,14 @@ if(APPLE)
 	list(APPEND VICINAE_QML_SOURCES
 		src/qml/macos-chrome-attached.hpp
 		src/qml/macos-chrome-attached.mm
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_SOURCES
+		src/qml/windows-chrome-attached.hpp
+		src/qml/windows-chrome-attached.cpp
+		src/qml/launcher-window-platform.cpp
 	)
 endif()
 
@@ -1153,7 +1186,10 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-if(NOT APPLE)
+if(WIN32)
+	include(WindowsDeploy)
+	vicinae_windows_deploy(${TARGET})
+elseif(NOT APPLE)
 	install(TARGETS ${TARGET}
 		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 	)

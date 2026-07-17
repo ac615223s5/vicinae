@@ -23,6 +23,10 @@
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "root-search/control-panel/control-panel-root-provider.hpp"
+#include "root-search/windows-settings/windows-settings-root-provider.hpp"
+#endif
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include "qml/window-material-attached.hpp"
@@ -78,6 +82,9 @@
 #ifdef Q_OS_MACOS
 #include "services/paste/macos-paste-service.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "services/paste/windows-paste-service.hpp"
+#endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
@@ -99,6 +106,10 @@
 #include "ipc-command-handler.hpp"
 #include "qml/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
+#endif
+
+#ifdef Q_OS_WIN
+#include "services/url-scheme/win-url-scheme-registrar.hpp"
 #endif
 
 #ifdef AUTO_ENABLE_AUTOSTART
@@ -175,6 +186,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     }
   }
 
+#ifdef Q_OS_WIN
+  vicinae::win::registerUrlSchemes();
+#endif
+
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
 #endif
@@ -235,6 +250,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
+#elif defined(Q_OS_WIN)
+    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
@@ -372,6 +390,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
+#endif
+#ifdef Q_OS_WIN
+    root->loadProvider(std::make_unique<WinSettingsRootProvider>());
+    root->loadProvider(std::make_unique<WinControlPanelRootProvider>());
 #endif
 
     // Force reload providers to make sure items that depend on them are shown
