@@ -14,14 +14,24 @@ Item {
     signal clicked
     signal activated
 
+    // Hover tracking only; buttons are handled by the TapHandler below. A
+    // MouseArea never sees the press on rows that also carry an enabled
+    // DragHandler (file drag, favorites reorder): DragHandler is a multi-point
+    // handler, which accepts the press point when it takes its passive grab,
+    // and that ends delivery before any item (including this MouseArea) gets
+    // it. TapHandler grabs passively without accepting, so it coexists.
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+    }
+
+    TapHandler {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
+        onSingleTapped: (eventPoint, button) => {
             root.clicked();
-            if (mouse.button === Qt.RightButton) {
+            if (button === Qt.RightButton) {
                 // right click selects the item and opens the action panel;
                 // actionPanel is a launcher-window context property, absent in
                 // other engines (e.g. settings window) that reuse this delegate
@@ -32,7 +42,10 @@ Item {
             if (Config.activateOnSingleClick)
                 root.activated();
         }
-        onDoubleClicked: root.activated()
+        onDoubleTapped: (eventPoint, button) => {
+            if (button === Qt.LeftButton)
+                root.activated();
+        }
     }
 
     SourceBlendRect {

@@ -41,9 +41,37 @@
 #include <qlogging.h>
 #include <memory>
 
+#ifdef Q_OS_LINUX
+#include <QtCore/qnativeinterface.h>
+#include <xcb/xcb.h>
+#endif
+
 #ifdef __GLIBC__
 #include <malloc.h>
 #endif
+
+// On X11 a keyboard grab by another client (clipboard pickers, WM
+// keybindings) delivers FocusOut(NotifyGrab) and Qt deactivates the window,
+// even though the server's input focus never left it.  Report whether the X
+// input focus is (still) on this window so such transient deactivations can
+// be told apart from real focus loss.  False on Wayland and other platforms.
+static bool windowHasX11InputFocus(QQuickWindow *window) {
+#ifdef Q_OS_LINUX
+  auto *x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>();
+  if (!x11) return false;
+  xcb_connection_t *conn = x11->connection();
+  if (!conn) return false;
+  auto cookie = xcb_get_input_focus(conn);
+  xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, nullptr);
+  if (!reply) return false;
+  const bool focused = reply->focus == window->winId();
+  free(reply);
+  return focused;
+#else
+  (void)window;
+  return false;
+#endif
+}
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
@@ -112,8 +140,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
     nav->setWindow(m_window);
-    connect(m_window, &QQuickWindow::activeChanged, this,
-            [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
+    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
+      // Ignore grab-induced deactivation: input focus is still ours, so this
+      // is not the user moving away (see windowHasX11InputFocus).
+      if (!m_window->isActive() && windowHasX11InputFocus(m_window)) return;
+      m_ctx.navigation->setWindowActivated(m_window->isActive());
+    });
     m_window->installEventFilter(this);
   }
 

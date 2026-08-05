@@ -266,7 +266,8 @@ void RootSearchModel::startCalculator() {
   auto expression = QString::fromStdString(m_query);
   if (expression.startsWith("=") && expression.size() > 1) {
     m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
-        expression.mid(1), {.mode = AbstractCalculatorBackend::ComputeMode::Full}));
+        expression.mid(1),
+        {.mode = AbstractCalculatorBackend::ComputeMode::Full, .allowUnknowns = true}));
     return;
   }
 

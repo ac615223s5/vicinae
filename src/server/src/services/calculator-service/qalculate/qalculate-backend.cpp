@@ -178,7 +178,9 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
 
-  if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
+  if (result.containsUnknowns() && !opts.allowUnknowns) {
+    return std::unexpected(CalculatorError("Unknown component in question"));
+  }
 
   bool error = false;
 
