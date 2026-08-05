@@ -121,6 +121,21 @@ TEST_CASE("accepts expressions in mixed search mode") {
   REQUIRE(functionCall->answer.text == "4");
 }
 
+TEST_CASE("solves equations only when unknowns are allowed") {
+  auto backend = makeBackend();
+
+  REQUIRE_FALSE(backend.compute("2x=1", {.mode = ComputeMode::MixedSearch}));
+  REQUIRE_FALSE(backend.compute("2x=1", {.mode = ComputeMode::Full}));
+
+  auto equation = backend.compute("2x=1", {.mode = ComputeMode::Full, .allowUnknowns = true});
+  auto symbolic = backend.compute("x+x", {.mode = ComputeMode::Full, .allowUnknowns = true});
+
+  REQUIRE(equation);
+  REQUIRE(equation->answer.text == "x = 0.5");
+  REQUIRE(symbolic);
+  REQUIRE(symbolic->answer.text == "2x");
+}
+
 TEST_CASE("strips trailing operators before computing") {
   auto backend = makeBackend();
 

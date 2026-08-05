@@ -23,6 +23,9 @@ public:
 
   struct ComputeOptions {
     ComputeMode mode = ComputeMode::Full;
+    // Keep answers that still contain unknown variables, so equations ("2x=1" -> "x = 0.5") and
+    // symbolic simplifications ("x+x" -> "2x") are treated as results instead of errors.
+    bool allowUnknowns = false;
   };
 
   struct Unit {

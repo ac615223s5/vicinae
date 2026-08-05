@@ -141,8 +141,8 @@ void CalcHistoryViewHost::startCalculator() {
   using Calc = AbstractCalculatorBackend;
 
   if (m_query.startsWith('=') && m_query.size() > 1) {
-    m_calcWatcher.setFuture(
-        m_calc->backend()->asyncCompute(m_query.mid(1), {.mode = Calc::ComputeMode::Full}));
+    m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(
+        m_query.mid(1), {.mode = Calc::ComputeMode::Full, .allowUnknowns = true}));
     return;
   }
 
